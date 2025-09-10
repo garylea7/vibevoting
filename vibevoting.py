@@ -63,12 +63,21 @@ elif st.session_state.step == 'email_gate':
 
             st.session_state.email = email
 
-            # Count referrals (if referrer exists)
+            # IF THERE'S A REFERRER, SAVE THE REFERRAL IMMEDIATELY
+            if st.session_state.referrer:
+                # Check if this referral already exists
+                existing = supabase.table('referrals').select('*').eq('referrer_email', st.session_state.referrer).eq('referred_email', email).execute()
+                if len(existing.data) == 0:
+                    supabase.table('referrals').insert({
+                        'referrer_email': st.session_state.referrer,
+                        'referred_email': email
+                    }).execute()
+
+            # Count referrals for progress bar
             if st.session_state.referrer:
                 ref_count = supabase.table('referrals').select('id').eq('referrer_email', st.session_state.referrer).execute()
                 st.session_state.friends_count = len(ref_count.data)
             else:
-                # Count how many people this user referred
                 ref_count = supabase.table('referrals').select('id').eq('referred_email', email).execute()
                 st.session_state.friends_count = len(ref_count.data)
 
